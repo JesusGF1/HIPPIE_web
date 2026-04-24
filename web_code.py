@@ -572,25 +572,20 @@ if token_acqm or token_csv or token_nwb or token_phy or token_link:
     #    mode='linear'
     #).squeeze(1).numpy()
 
-    #make dropdown panel to choose the source for HIPPIE model
-    dataset_files = {
-        "braingeneers_manual_curation": "Maxwell Biosystems Chip",
-        "cellexplorer_area": "Neuropixel 1.0",
-        "cellexplorer_cell_type": "Neuropixel 1.0",
-        "hausser_cell_type": "Neuropixel 1.0",
-        "hull_cell_type": "Neuropixel 1.0",
-        "lissberger_labeled_cell_type": "Extracellular recording Macaque",
-        "mouse_organoids_cell_line": "Maxwell Biosystems chip",
-        "mouse_slice_area": "Maxwell Biosystems Chip",
-        "allen_s_n_a_subset_no_superregions": "Neuropixel 1.0",
+    # Technology conditioning for HIPPIE encoder (matches training vocabulary)
+    TECHNOLOGY_OPTIONS = {
+        "Neuropixels (1.0 / 2.0)":           0,  # IBL, Allen, Hausser, Hull, CellExplorer
+        "Silicon probe (non-Neuropixels)":    1,  # NeuroNexus, Plexon s-Probe, etc.
+        "Juxtacellular (glass micropipette)": 2,
+        "Tetrode":                            3,
     }
-    
-    source = st.selectbox(
-            'Select how your data was obtained',
-            options=dataset_files.keys(),
-        )
-    
-    source = dataset_files[source]
+
+    source = TECHNOLOGY_OPTIONS[st.selectbox(
+        "Select recording technology",
+        options=list(TECHNOLOGY_OPTIONS.keys()),
+        help="Choose the electrode type used to record your data. "
+             "This conditions the HIPPIE encoder on recording technology.",
+    )]
 
     #get HIPPIE embedings
 

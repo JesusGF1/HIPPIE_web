@@ -126,7 +126,7 @@ def get_ort_session():
     """
     model_path = os.path.join(
         os.path.dirname(__file__),
-        "epoch=35-step=468.dynamic.onnx"
+        "hippie_techcond_v1.dynamic.onnx"
     )
 
     so = ort.SessionOptions()
@@ -218,10 +218,10 @@ def HIPPIE(normalized_acg, normalized_isi, normalized_waveforms, source=None, ch
             acg_fixed[i, 0, :] = np.interp(x_new, x_old, acg[i, 0, :]).astype(np.float32)
         acg = acg_fixed
 
-    # Make labels
+    # Make labels — source is the integer technology ID (0-3)
     N = acg.shape[0]
-    source_labels = np.zeros((N,), dtype=np.int64)
-    class_labels  = np.zeros((N,), dtype=np.int64)
+    source_id = int(source) if source is not None else 0
+    source_labels = np.full((N,), source_id, dtype=np.int64)
 
     # Make contiguous (helps ORT + avoids hidden copies)
     acg  = np.ascontiguousarray(acg)
@@ -234,11 +234,10 @@ def HIPPIE(normalized_acg, normalized_isi, normalized_waveforms, source=None, ch
     outs = []
     for s in range(0, N, chunk):
         feed = {
-            "wave": wave[s:s+chunk],
-            "isi": isi[s:s+chunk],
-            "acg": acg[s:s+chunk],
+            "wave":          wave[s:s+chunk],
+            "isi":           isi[s:s+chunk],
+            "acg":           acg[s:s+chunk],
             "source_labels": source_labels[s:s+chunk],
-            "class_labels": class_labels[s:s+chunk],
         }
         out = sess.run(["hippie_out"], feed)[0]
         outs.append(out)
