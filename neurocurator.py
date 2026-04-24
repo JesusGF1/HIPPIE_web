@@ -583,20 +583,20 @@ class Neurocurator:
         self.compute_all_waveform_features()
     
     def load_nwb_spike_times(self, nwb_path):
- 
-        
         with NWBHDF5IO(nwb_path, "r", load_namespaces=True) as io:
             nwb = io.read()
 
-            #PyNWB exposes per-unit spike times via get_unit_spike_times(i) in seconds
+            if nwb.units is None:
+                self.spike_times_train = []
+                return
+
             spikes_ms = []
-            n_units = len(nwb.units.id.data)
+            n_units = len(nwb.units)
             for i in range(n_units):
-                st_sec = nwb.units.get_unit_spike_times(i)  #seconds (ragged vector)
+                st_sec = nwb.units.get_unit_spike_times(i)  # seconds → ms
                 st_ms = np.asarray(st_sec, dtype=float) * 1000.0
                 spikes_ms.append(st_ms)
 
-        #fill object; downstream ISI/ACG code can run as-is
         self.spike_times_train = spikes_ms
 
     def load_nwb_waveforms(self, nwb_path, n_datapoints=50, candidates=("waveform_mean", "spike_waveforms")):
